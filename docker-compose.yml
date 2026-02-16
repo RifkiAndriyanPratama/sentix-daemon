@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: sentix
+      POSTGRES_PASSWORD: sentix
+      POSTGRES_DB: sentix
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dashboard:/var/www
