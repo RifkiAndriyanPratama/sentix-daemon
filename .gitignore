@@ -9,3 +9,4 @@ data/
 .DS_Store
 Thumbs.db
 taks.txt
+.env

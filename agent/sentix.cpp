@@ -5,11 +5,22 @@
 #include <unistd.h> // Untuk fungsi sleep()
 #include <pqxx/pqxx> // Untuk koneksi database
 
-using namespace std;
-
 int main() {
-    cout << "[SENTIX DAEMON] Starting memory surveillance..." << endl;
-    std::string connectionString = "dbname=sentix user=sentix password=sentix host=localhost port=5432";
+    std::cout << "[SENTIX DAEMON] Starting memory surveillance..." << std::endl;
+    const char* POSTGRES_USER = getenv("POSTGRES_USER");
+    const char* POSTGRES_PASSWORD = getenv("POSTGRES_PASSWORD");
+    const char* POSTGRES_DB = getenv("POSTGRES_DB");
+
+    if(!POSTGRES_USER || !POSTGRES_PASSWORD || !POSTGRES_DB){
+        std::cerr << "Environment variables POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB are not set." << std::endl;
+        return 1;
+    }
+
+    std::string connectionString =
+            " dbname="   + std::string(POSTGRES_DB)   +
+            " user="    + std::string(POSTGRES_USER) +
+            " password="+ std::string(POSTGRES_PASSWORD) +
+            " host=localhost port=5432";
 
     try{
         pqxx::connection conn(connectionString);
@@ -39,7 +50,7 @@ int main() {
             double ramUsagePercent = 0.0;
             ramUsagePercent = ((memTotal - memAvailable) / static_cast<double>(memTotal)) * 100;
 
-            cout << "Current RAM Usage: " << ramUsagePercent << "%" << endl;
+            std::cout << "Current RAM Usage: " << ramUsagePercent << "%" << std::endl;
 
             // kalau ramUsagePercent > 90.0, maka panggil script heal.sh
             if (ramUsagePercent > 90.0){
@@ -49,7 +60,7 @@ int main() {
             // insert data ke database
             try{
                 pqxx::work txn(conn);
-                txn.exec("INSERT INTO memory_logs (ram_usage_percent) VALUES (" + to_string(ramUsagePercent) + ")");
+                txn.exec("INSERT INTO memory_logs (ram_usage_percent) VALUES (" + std::to_string(ramUsagePercent) + ")");
                 txn.commit();
             } catch (const std::exception& e){
                 std::cout << "Failed to insert data into database!" << std::endl;
