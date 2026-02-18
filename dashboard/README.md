@@ -1,59 +1,124 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 👁️‍🗨️ Sentix Daemon & Telemetry Dashboard
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A bare-metal, lightweight system telemetry agent written in native C++ that performs real-time memory surveillance. It is tightly integrated with a modern Laravel Livewire dashboard to visualize system health metrics via a Dockerized PostgreSQL infrastructure.
 
-## About Laravel
+![Status](https://img.shields.io/badge/Status-Active_Development-success?style=for-the-badge)
+![C++](https://img.shields.io/badge/Agent-C++_Native-00599C?style=for-the-badge&logo=c%2B%2B)
+![Laravel](https://img.shields.io/badge/Dashboard-Laravel_11-FF2D20?style=for-the-badge&logo=laravel)
+![Docker](https://img.shields.io/badge/Infrastructure-Docker-2496ED?style=for-the-badge&logo=docker)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-4169E1?style=for-the-badge&logo=postgresql)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## ⚙️ Requirements
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Pastikan sistem kamu sudah terinstall:
 
-## Learning Laravel
+- **Docker & Docker Compose** — Untuk infrastruktur & dashboard
+- **G++ Compiler & libpqxx** — Untuk kompilasi agent C++
+- **Linux Environment** — Disarankan Arch Linux / Ubuntu / Debian untuk akses `/proc/meminfo`
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🚀 Quick Start
 
-## Laravel Sponsors
+### 1. Persiapan Repository
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Clone repository ini dan siapkan file environment:
 
-### Premium Partners
+```bash
+git clone https://github.com/USERNAME_KAMU/sentix-daemon.git
+cd sentix-daemon
+cp .env.example .env
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+> **Catatan:** Jangan lupa edit file `.env` dan isi dengan kredensial database yang aman.
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 2. Menjalankan Infrastruktur & Web Dashboard
 
-## Code of Conduct
+Inisialisasi container Docker (PostgreSQL & PHP 8.3) dan lakukan migrasi database Laravel.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+# Build dan jalankan container di background
+docker compose up -d --build
 
-## Security Vulnerabilities
+# Masuk ke dalam container aplikasi Laravel
+docker exec -it sentix-daemon-app-1 bash
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Jalankan migrasi di dalam container
+php artisan migrate
+exit
+```
 
-## License
+Dashboard sekarang bisa diakses melalui **http://localhost:8080**.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+### 3. Kompilasi & Jalankan Sentix Agent (C++)
+
+Agent membutuhkan akses root untuk mengeksekusi script pembersihan cache level kernel.
+
+```bash
+cd agent
+
+# Kompilasi native C++ agent
+g++ sentix.cpp -o sentix -lpqxx -lpq
+
+# Inject environment variables dan jalankan dengan hak akses penuh (-E)
+export $(grep -v '^#' ../.env | xargs)
+sudo -E ./sentix
+```
+
+---
+
+## 🎯 Fitur Lengkap
+
+### 🛡️ Core Agent (C++ & Bash)
+
+- [x] **Bare-metal Memory Surveillance** — Membaca `/proc/meminfo` secara langsung dari Linux kernel.
+- [x] **PostgreSQL Telemetry** — Mengirim data penggunaan RAM secara real-time via libpqxx.
+- [x] **Fault-Tolerant Engine** — Menggunakan sistem try-catch loop untuk mencegah crash saat koneksi database terputus.
+- [x] **Automated Kernel Healing** — Otomatis memicu eksekusi `heal.sh` untuk membersihkan kernel cache jika penggunaan RAM melebihi 90%.
+- [x] **Secure Credentials** — Menggunakan Environment Variables OS untuk mengamankan kredensial database dari hardcoding.
+
+### 📊 Dashboard (Laravel 11 & Livewire 3)
+
+- [x] **Real-time Synchronization** — UI terupdate secara otomatis tanpa browser reload menggunakan fitur Livewire polling.
+- [x] **Flux UI Components** — Antarmuka pengguna yang modern, responsif, dan mendukung dark mode.
+- [x] **Containerized** — Berjalan sepenuhnya dalam isolasi Docker, menghindari konflik dependensi di lokal.
+
+---
+
+## 🛠️ Tech Stack
+
+**System Level:**
+- C++ Native (Core Agent)
+- Bash (Action Scripts)
+- libpqxx (PostgreSQL C++ API)
+
+**Web Level:**
+- Laravel 11 (Backend Framework)
+- Livewire 3 (Reactive Frontend)
+- Flux UI & TailwindCSS (Styling)
+
+**Infrastructure:**
+- Docker & Docker Compose
+- PostgreSQL 15 (Alpine Image)
+- PHP 8.3 CLI (Alpine Image)
+
+---
+
+## 📂 Project Structure
+
+```plaintext
+sentix-daemon/
+├── agent/                 # C++ Native Application
+│   ├── actions/
+│   │   └── heal.sh        # Bash script untuk memory cache clearing
+│   └── sentix.cpp         # Main C++ Daemon logic
+├── dashboard/             # Laravel 11 Application (Flux UI)
+├── docker-compose.yml     # Konfigurasi orkestrasi Docker
+└── .env                   # Centralized secrets (ignored by git)
+```
